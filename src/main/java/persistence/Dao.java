@@ -1,4 +1,7 @@
 package persistence;
+
+import java.util.List;
+
 /**
  * @author Evan Ritchey
  * @since 11|12|2021
@@ -10,12 +13,12 @@ public interface Dao<T> {
     void create(T t);
 
     // read
-    T getById(long id);
-    //List<T> getAll(); //can't use java collections for this project
+    T get(T t);
+    List<T> getAll();
 
     // update
     boolean update(T t);
 
     //delete
-    boolean deleteById(long id);
+    boolean delete(T t);
 }
