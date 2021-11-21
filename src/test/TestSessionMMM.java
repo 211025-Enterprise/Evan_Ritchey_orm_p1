@@ -11,13 +11,13 @@ public class TestSessionMMM {
     }
 
     private static class dummyClassType{
-        @SaveFieldMMM
+        @SaveFieldMMM()
         private boolean testBoolPrivate;
-        @SaveFieldMMM
+        @SaveFieldMMM()
         public boolean testBoolPublic;
-        @SaveFieldMMM
+        @SaveFieldMMM()
         private int testIntPrivate;
-        @SaveFieldMMM
+        @SaveFieldMMM()
         public int testIntPublic;
     }
 
@@ -42,10 +42,23 @@ public class TestSessionMMM {
         System.out.println(retrivedDct2.getStringTest());
     }
 
+    @Test
+    public void testUpdateDummyClassType2(){
+        SessionMMM mmm = new SessionMMM();
+
+        SessionMMM.FieldValuePair[] values = new SessionMMM.FieldValuePair[1];
+        values[0] = new SessionMMM.FieldValuePair("stringTest","Happiness");
+
+        SessionMMM.FieldValuePair[] constraints = new SessionMMM.FieldValuePair[1];
+        constraints[0] = new SessionMMM.FieldValuePair("intTest",1453);
+
+        mmm.update(new DummyClassType2("Ignore",45),values,constraints);
+    }
+
     private static class DummyClassType2{
-        @SaveFieldMMM
+        @SaveFieldMMM()
         private String stringTest;
-        @SaveFieldMMM
+        @SaveFieldMMM()
         private int intTest;
 
         public DummyClassType2(){}

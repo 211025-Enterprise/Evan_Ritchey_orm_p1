@@ -223,14 +223,36 @@ public class SessionMMM implements Dao {
      * @param fvpValues the fields of Object o you want to update
      * @param fvpConstraints any constraints we want to define
      */
-    public boolean update(Object o,FieldValuePair[] fvpValues,FieldValuePair[] fvpConstraints) {
+    public boolean update(Object o,FieldValuePair[] fvpValues,FieldValuePair[] fvpConstraints) {//TODO refactor use the values in o instead as the replacement values
         //Start constructing the query
         StringBuilder sql_query = new StringBuilder("update \""+o.getClass().getSimpleName()+"\" set ");
         //build query
         //SET
+        StringBuilder value_query = new StringBuilder();
+        for(int i = 0; i < fvpValues.length; i++){
+            value_query.append(String.format("\"%s\"",fvpValues[i].getField())).append(" = ");
+            if(fvpValues[i].getValue().getClass() == String.class || fvpValues[i].getValue().getClass() == Character.class) //account for String formatting
+                value_query.append("\'").append(fvpValues[i].getValue()).append("\'");
+            else
+                value_query.append(fvpValues[i].getValue());
+            value_query.append(",");
+        }
+        value_query.deleteCharAt(value_query.length()-1);//remove that last comma
 
         //WHERE
+        StringBuilder constraint_query = new StringBuilder(" where ");
+        for(int i = 0; i < fvpConstraints.length; i++){
+            constraint_query.append(String.format("\"%s\"",fvpConstraints[i].getField())).append(" = ");
+            if(fvpConstraints[i].getValue().getClass() == String.class || fvpConstraints[i].getValue().getClass() == Character.class) //account for String formatting
+                constraint_query.append("\'").append(fvpConstraints[i].getValue()).append("\'");
+            else
+                constraint_query.append(fvpConstraints[i].getValue());
+            constraint_query.append(" AND ");
+        }
+        constraint_query.delete(constraint_query.length()-5,constraint_query.length()-1);//remove that last and
 
+        sql_query.append(value_query).append(constraint_query);
+        System.out.println(sql_query);
         try(Connection connection = ConnectionUtility.getConnection()){
             assert connection != null;
             PreparedStatement stmt = connection.prepareStatement(sql_query.toString());
@@ -272,7 +294,7 @@ public class SessionMMM implements Dao {
      * namely for get.
      * e.g. {new FieldValuePair("fieldName1", fieldValue1),new FieldValuePair("fieldNameN", fieldValueN),...}
      */
-    public static class FieldValuePair{
+    public static class FieldValuePair{ //TODO refactor; replace w/ https://www.javatuples.org/
         private final String field;
         private final Object value;
 

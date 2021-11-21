@@ -12,4 +12,10 @@ import java.lang.annotation.Target;
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
-public @interface SaveFieldMMM {}
+public @interface SaveFieldMMM {
+    boolean isPrimaryKey() default false;
+    boolean isUnique() default false;
+    boolean isNotNull() default false;
+    //Object hasDefault() default null;
+    //TODO hasCondition //and would somehow have a functional interface here or something IDK
+}

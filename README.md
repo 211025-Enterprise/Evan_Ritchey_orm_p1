@@ -6,7 +6,9 @@ ___
 A super lightweight ORM that uses only a singular annotation
 ### Instructions:
 In any given class that you want to create a table for, you must mark the fields you want tracked with:
-> @SaveFieldMMM
+> @SaveFieldMMM()
+
+//TODO: Additional constraints on the field can also be set
 
 That class MUST CONTAIN a zero arguments constructor
 
