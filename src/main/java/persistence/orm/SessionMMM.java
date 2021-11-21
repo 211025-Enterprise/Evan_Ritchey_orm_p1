@@ -4,7 +4,6 @@ import annotations.SaveFieldMMM;
 import persistence.Dao;
 import util.ConnectionUtility;
 
-import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -13,6 +12,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+
+//TODO: ideally refactor and fix all methods to have prepared stmts instead
 
 /**
  * @author Evan Ritchey
@@ -252,7 +253,7 @@ public class SessionMMM implements Dao {
         constraint_query.delete(constraint_query.length()-5,constraint_query.length()-1);//remove that last and
 
         sql_query.append(value_query).append(constraint_query);
-        System.out.println(sql_query);
+//        System.out.println(sql_query);
         try(Connection connection = ConnectionUtility.getConnection()){
             assert connection != null;
             PreparedStatement stmt = connection.prepareStatement(sql_query.toString());
@@ -270,9 +271,43 @@ public class SessionMMM implements Dao {
         return false;
     }
 
+    /**
+     * delete records in our table defined in our object o
+     * @param o contains table name and constraint values
+     * @return true if the delete was successful
+     */
     @Override
     public boolean delete(Object o) {
+        //Start constructing the query
+        StringBuilder sql_query = new StringBuilder("delete from \""+o.getClass().getSimpleName()+"\" where");
+
         return false;
+    }
+
+    public boolean delete(Object o, FieldValuePair[] constraints){
+        //Start constructing the query
+        StringBuilder sql_query = new StringBuilder("delete from \""+o.getClass().getSimpleName()+"\" where");
+        for(int i = 0; i < constraints.length;i++){
+            sql_query.append(String.format("\"%s\"",constraints[i].getField()));
+            if(constraints[i].getValue().getClass() == String.class || constraints[i].getValue().getClass() == Character.class) //account for String formatting
+                sql_query.append("\'").append(constraints[i].getValue()).append("\'");
+            else
+                sql_query.append(constraints[i].getValue());
+            sql_query.append(" AND ");
+        }
+        sql_query.delete(sql_query.length()-5,sql_query.length()-1);//remove that last and
+
+//        System.out.println(sql_query);
+        try(Connection connection = ConnectionUtility.getConnection()){
+            assert connection != null;
+            PreparedStatement stmt = connection.prepareStatement(sql_query.toString());
+            stmt.executeUpdate();
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+            return false; //update failed
+        }
+
+        return true;
     }
 
     // ========== Utility Methods ========== //
@@ -289,12 +324,13 @@ public class SessionMMM implements Dao {
 
     // ========== Utility Classes ========== //
 
+    //TODO refactor; replace w/ https://www.javatuples.org/
+    //or I could just replace with a layer of abstraction and build a utility class of var args which will process this automatically
     /**
      * a primitive tuple implementation. a bit clunky, but usable
-     * namely for get.
      * e.g. {new FieldValuePair("fieldName1", fieldValue1),new FieldValuePair("fieldNameN", fieldValueN),...}
      */
-    public static class FieldValuePair{ //TODO refactor; replace w/ https://www.javatuples.org/
+    public static class FieldValuePair{
         private final String field;
         private final Object value;
 
