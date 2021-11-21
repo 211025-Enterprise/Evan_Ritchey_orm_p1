@@ -13,8 +13,7 @@ public interface Dao<T> {
     void create(T t);
 
     // read
-    T get(T t);
-    List<T> getAll();
+    T[] get(T t);
 
     // update
     boolean update(T t);

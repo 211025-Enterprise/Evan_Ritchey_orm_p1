@@ -4,10 +4,11 @@ import annotations.SaveFieldMMM;
 import persistence.Dao;
 import util.ConnectionUtility;
 
+import java.lang.reflect.Array;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
+import java.lang.reflect.InvocationTargetException;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -20,7 +21,7 @@ import java.util.stream.Collectors;
  */
 public class SessionMMM implements Dao {
 
-    private List<String> recordedTables;
+    private List<String> recordedTables;//TODO replace with a .txt cache instead
     public SessionMMM(){
         recordedTables = new ArrayList<>();
     }
@@ -33,16 +34,11 @@ public class SessionMMM implements Dao {
     @Override
     public void create(Object o) {
         //only keep fields marked for saving
-        Field[] fields = o.getClass().getDeclaredFields();
-        List<Field> annotatedFields;
-        annotatedFields = Arrays.stream(fields)
-                .filter(field -> field.isAnnotationPresent(SaveFieldMMM.class))
-                .collect(Collectors.toList());
-
+        List<Field> annotatedFields = getAnnotatedFields(o);
         //create the table if it doesn't exist
         if(!recordedTables.contains(o.getClass().getSimpleName())) {
             recordedTables.add(o.getClass().getSimpleName());//record the table
-            createTable(o, annotatedFields);
+            createTable(o,annotatedFields);
         }
         //then create (sql insert) the object's annotated fields (record)
         insertRecord(o,annotatedFields);
@@ -53,10 +49,10 @@ public class SessionMMM implements Dao {
      */
     private void createTable(Object o,List<Field> annotatedFields) {
         //start constructing the query
-        StringBuilder sql_query = new StringBuilder("create table if not exists "+o.getClass().getSimpleName()+"(");
+        StringBuilder sql_query = new StringBuilder("create table if not exists \""+o.getClass().getSimpleName()+"\"(");
 
         for(Field field : annotatedFields){ //[var name] [postgres type] ,
-            sql_query.append(field.getName()).append(" ");
+            sql_query.append("\"").append(field.getName()).append("\" ");
             switch (field.getType().getTypeName()){//map data types, accepting only primitive types & Strings for now
                 //TODO: do I eventually want to account for enums?
                 //non-floating points
@@ -64,7 +60,6 @@ public class SessionMMM implements Dao {
                 case "short":
                     sql_query.append("smallint");//2 bytes
                     break;
-                //2 bytes
                 case "int":
                     sql_query.append("integer");//4 bytes
                     break;
@@ -86,7 +81,7 @@ public class SessionMMM implements Dao {
                     sql_query.append("bool");
                     break;
                 //String
-                case "String":
+                case "java.lang.String": //full path since it's not a primitive
                     sql_query.append("varchar(100)");//limits char len. to 100
                     break;
                 default:
@@ -102,6 +97,7 @@ public class SessionMMM implements Dao {
         //actually make the query
         try(Connection connection = ConnectionUtility.getConnection()){
             assert connection != null;////make SURE we're actually operating on a valid connection
+//            System.out.println(sql_query);
             PreparedStatement stmt = connection.prepareStatement(sql_query.toString());
             //TODO: stmt.setString ? refactor for question marks for prepared statements
             stmt.executeUpdate();
@@ -117,13 +113,13 @@ public class SessionMMM implements Dao {
      */
     private void insertRecord(Object o, List<Field> annotatedFields) {
         //start constructing the query
-        StringBuilder sql_query = new StringBuilder("insert into "+o.getClass().getSimpleName());
+        StringBuilder sql_query = new StringBuilder("insert into \""+o.getClass().getSimpleName()+"\"");
         StringBuilder columns = new StringBuilder("(");
         StringBuilder values = new StringBuilder("(");
 
         //build the query
         for(Field field : annotatedFields){
-            columns.append(field.getName()).append(",");
+            columns.append("\"").append(field.getName()).append("\"").append(",");
             values.append("?,");
         }
         //remove trailing commas
@@ -143,6 +139,7 @@ public class SessionMMM implements Dao {
                 field.setAccessible(true);//override any accessibility modifiers
                 stmt.setObject(index++,field.get(o));//retrieve value of the field
             }
+//            System.out.println(sql_query);
             stmt.executeUpdate();
         } catch (SQLException | IllegalAccessException throwables) {
             throwables.printStackTrace();
@@ -151,28 +148,103 @@ public class SessionMMM implements Dao {
     }
 
     /**
-     * retrieve a database record base on
-     * @param o defines the table and the specific fields
+     * retrieve a database record based on the following
+     * @param o the object whose associated table we want to access
+     * @param fvp the values we want to constrain the query fields to (only primitives and Strings)
      * @return a record associated with the object o we're passing in
      */
-    @Override
-    public Object get(Object o) {
+    public Object[] get(Object o, FieldValuePair[] fvp) {
         //Start constructing the query
-        StringBuilder sql_query = new StringBuilder("select * from "+o.getClass().getSimpleName()+"where ");
-        //retrieve fields //TODO build fields
-        //build query | column_name = ? AND ...
+        StringBuilder sql_query = new StringBuilder("select * from \""+o.getClass().getSimpleName()+"\" where ");
+        //build query
+        for(FieldValuePair f : fvp){
+            //column_name = value
+            sql_query.append(String.format("\"%s\"",f.getField())).append(" = ");
+            if(f.getValue().getClass() == String.class || f.getValue().getClass() == Character.class) //account for String formatting
+                sql_query.append("\'").append(f.getValue()).append("\'");
+            else
+                sql_query.append(f.getValue());
+
+            sql_query.append(" AND ");//account for further constraints
+        }
+        sql_query.delete(sql_query.length()-5,sql_query.length()-1); //remove the last AND
+
+//        System.out.println(sql_query);
         //make query
+        List<Object> records = new ArrayList<>();
+        try(Connection connection = ConnectionUtility.getConnection()){
+            assert connection != null;////make SURE we're actually operating on a valid connection
+            PreparedStatement stmt = connection.prepareStatement(sql_query.toString());
+            ResultSet rs = stmt.executeQuery();
+
+            while(rs.next()){ //for every row retrieved
+                Object newObject = ClassCreator.getInstance(o.getClass());
+                if(newObject == null)
+                    throw new ExceptionInInitializerError("Class "+o.getClass().getSimpleName()+" is missing a zero args constructor.");
+
+                List<Field> annotatedFields = getAnnotatedFields(o);
+                int i = 1;
+                for(Field field:annotatedFields){//put our retrieved values into a new object instance
+                    field.setAccessible(true);//override any private accessors
+                    //LYNCH PIN:
+                    Field f = newObject.getClass().getDeclaredField(field.getName());
+                    f.setAccessible(true);
+                    f.set(newObject,rs.getObject(i++));
+                }
+
+                records.add(newObject);
+            }
+        } catch (SQLException
+                | ExceptionInInitializerError
+                | IllegalAccessException
+                | InstantiationException
+                | InvocationTargetException
+                | NoSuchFieldException throwables) {
+            throwables.printStackTrace();
+        }
+
+        return records.toArray();
+    }
+
+    /**
+     * just get the whole table associated with Object o, without constraining the query to any values
+     * @param o describe the table we want to pull from
+     * @return a list of objects of the same type as o, containing all the entries from the associated table
+     */
+    @Override
+    public Object[] get(Object o){
 
         return null;
     }
 
-    @Override
-    public List getAll() {
-        return null;
+    /**
+     * Pass in an object that defines the corresponding table you want updated with the FieldValuePair
+     * @param o object that defines the corresponding table you want updated
+     * @param fvpValues the fields of Object o you want to update
+     * @param fvpConstraints any constraints we want to define
+     */
+    public boolean update(Object o,FieldValuePair[] fvpValues,FieldValuePair[] fvpConstraints) {
+        //Start constructing the query
+        StringBuilder sql_query = new StringBuilder("update \""+o.getClass().getSimpleName()+"\" set ");
+        //build query
+        //SET
+
+        //WHERE
+
+        try(Connection connection = ConnectionUtility.getConnection()){
+            assert connection != null;
+            PreparedStatement stmt = connection.prepareStatement(sql_query.toString());
+            stmt.executeUpdate();
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+            return false; //update failed
+        }
+
+        return true; //update passed an succeeded
     }
 
     @Override
-    public boolean update(Object o) {
+    public boolean update(Object o){
         return false;
     }
 
@@ -182,8 +254,66 @@ public class SessionMMM implements Dao {
     }
 
     // ========== Utility Methods ========== //
-    private Field[] getAnnotatedFields(Object o){
-        return null;
+
+    private List<Field> getAnnotatedFields(Object o){
+        Field[] fields = o.getClass().getDeclaredFields();
+        List<Field> annotatedFields;
+        annotatedFields = Arrays.stream(fields)
+                .filter(field -> field.isAnnotationPresent(SaveFieldMMM.class))
+                .collect(Collectors.toList());
+
+        return annotatedFields;
+    }
+
+    // ========== Utility Classes ========== //
+
+    /**
+     * a primitive tuple implementation. a bit clunky, but usable
+     * namely for get.
+     * e.g. {new FieldValuePair("fieldName1", fieldValue1),new FieldValuePair("fieldNameN", fieldValueN),...}
+     */
+    public static class FieldValuePair{
+        private final String field;
+        private final Object value;
+
+        public FieldValuePair(String field, Object value){
+            this.field = field;
+            this.value = value;
+        }
+
+        public String getField() {
+            return field;
+        }
+
+        public Object getValue() {
+            return value;
+        }
+    }
+
+    /**
+     * @author bpinkerton
+     * invoke a new instance of a class to retrieve an object
+     */
+    private static class ClassCreator{
+
+        public static Object getInstance(Class<?> clazz, Object... args) throws InvocationTargetException, InstantiationException, IllegalAccessException {
+            Constructor<?> noArgsConstructor = null;
+
+            //TODO generify, so that if args are past in, it will return a newInstance using the matching constructor
+
+            //retrieve the constructor with 0 args
+            noArgsConstructor = Arrays.stream(clazz.getDeclaredConstructors())
+                    .filter(c->c.getParameterCount() == 0)
+                    .findFirst()
+                    .orElse(null);
+
+            if(noArgsConstructor != null) {
+                noArgsConstructor.setAccessible(true);
+                return noArgsConstructor.newInstance();
+            }
+
+            return null;
+        }
     }
 
 }
