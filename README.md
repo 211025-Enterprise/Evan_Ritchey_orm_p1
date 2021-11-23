@@ -1,17 +1,14 @@
-# Evan_Ritchey_orm_p1
-## Primitive ORM for p1
-### LMMMC | Thrice the "mmm" | One plus the "magnificence" !!!  
+# Evan Ritchey Project 1 ORM
+## Light Weight ORM (LWORM)
 ___
 ###Description:
-A super lightweight ORM that uses only a singular annotation
+A super lightweight ORM whose design aims to use as few annotations as possible
 ### Instructions:
 In any given class that you want to create a table for, you must mark the fields you want tracked with:
 > @SaveFieldMMM()
 
-//TODO: Additional constraints on the field can also be set
-
 That class MUST CONTAIN a zero arguments constructor
 
 //TODO:
- -[ ] how to annotate
- -[ ] how to make server calls
+ -[ ] how to make server calls 
+ -[ ] Additional constraints on the field can also be set

@@ -20,10 +20,10 @@ import java.util.stream.Collectors;
  * @since 11|15|2021
  * essentially a more generic DAO implementation, that generates annotated fields as autonomously as possible
  */
-public class SessionMMM implements Dao {
+public class Lworm implements Dao {
 
     private List<String> recordedTables;//TODO replace with a .txt cache instead
-    public SessionMMM(){
+    public Lworm(){
         recordedTables = new ArrayList<>();
     }
 
@@ -286,13 +286,13 @@ public class SessionMMM implements Dao {
 
     public boolean delete(Object o, FieldValuePair[] constraints){
         //Start constructing the query
-        StringBuilder sql_query = new StringBuilder("delete from \""+o.getClass().getSimpleName()+"\" where");
-        for(int i = 0; i < constraints.length;i++){
-            sql_query.append(String.format("\"%s\"",constraints[i].getField()));
-            if(constraints[i].getValue().getClass() == String.class || constraints[i].getValue().getClass() == Character.class) //account for String formatting
-                sql_query.append("\'").append(constraints[i].getValue()).append("\'");
+        StringBuilder sql_query = new StringBuilder("delete from \""+o.getClass().getSimpleName()+"\" where ");
+        for (FieldValuePair constraint : constraints) {
+            sql_query.append(String.format("\"%s\"", constraint.getField())).append("=");
+            if (constraint.getValue().getClass() == String.class || constraint.getValue().getClass() == Character.class) //account for String formatting
+                sql_query.append("\'").append(constraint.getValue()).append("\'");
             else
-                sql_query.append(constraints[i].getValue());
+                sql_query.append(constraint.getValue());
             sql_query.append(" AND ");
         }
         sql_query.delete(sql_query.length()-5,sql_query.length()-1);//remove that last and
