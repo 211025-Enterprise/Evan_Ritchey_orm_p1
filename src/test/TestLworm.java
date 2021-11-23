@@ -1,9 +1,11 @@
-import annotations.SaveFieldMMM;
+import annotations.SaveFieldLworm;
+import org.junit.Ignore;
 import org.junit.Test;
 import persistence.orm.Lworm;
 
 public class TestLworm {
 
+    @Ignore
     @Test
     public void testSessionMMMcreateTable(){
         Lworm mmm = new Lworm();
@@ -11,13 +13,13 @@ public class TestLworm {
     }
 
     private static class dummyClassType{
-        @SaveFieldMMM()
+        @SaveFieldLworm()
         private boolean testBoolPrivate;
-        @SaveFieldMMM()
+        @SaveFieldLworm()
         public boolean testBoolPublic;
-        @SaveFieldMMM()
+        @SaveFieldLworm()
         private int testIntPrivate;
-        @SaveFieldMMM()
+        @SaveFieldLworm()
         public int testIntPublic;
     }
 
@@ -69,9 +71,9 @@ public class TestLworm {
     }
 
     private static class DummyClassType2{
-        @SaveFieldMMM()
+        @SaveFieldLworm()
         private String stringTest;
-        @SaveFieldMMM()
+        @SaveFieldLworm()
         private int intTest;
 
         public DummyClassType2(){}

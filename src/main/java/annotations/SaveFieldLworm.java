@@ -12,7 +12,7 @@ import java.lang.annotation.Target;
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
-public @interface SaveFieldMMM {
+public @interface SaveFieldLworm {
     boolean isPrimaryKey() default false;
     boolean isUnique() default false;
     boolean isNotNull() default false;

@@ -1,6 +1,6 @@
 package persistence.orm;
 
-import annotations.SaveFieldMMM;
+import annotations.SaveFieldLworm;
 import persistence.Dao;
 import util.ConnectionUtility;
 
@@ -273,7 +273,7 @@ public class Lworm implements Dao {
 
     /**
      * delete records in our table defined in our object o
-     * @param o contains table name and constraint values
+     * @param o contains table name and constraint values // NoteToSelf :\ inconsistent w/ get
      * @return true if the delete was successful
      */
     @Override
@@ -316,7 +316,7 @@ public class Lworm implements Dao {
         Field[] fields = o.getClass().getDeclaredFields();
         List<Field> annotatedFields;
         annotatedFields = Arrays.stream(fields)
-                .filter(field -> field.isAnnotationPresent(SaveFieldMMM.class))
+                .filter(field -> field.isAnnotationPresent(SaveFieldLworm.class))
                 .collect(Collectors.toList());
 
         return annotatedFields;
@@ -326,6 +326,7 @@ public class Lworm implements Dao {
 
     //TODO refactor; replace w/ https://www.javatuples.org/
     //or I could just replace with a layer of abstraction and build a utility class of var args which will process this automatically
+    //This should also contain a switch for setting to AND/OR 
     /**
      * a primitive tuple implementation. a bit clunky, but usable
      * e.g. {new FieldValuePair("fieldName1", fieldValue1),new FieldValuePair("fieldNameN", fieldValueN),...}
