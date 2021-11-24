@@ -8,10 +8,12 @@ import java.util.Properties;
 
 public class ConnectionUtility {
 
-    private static Properties properties;
-    private static final String propertiesPath = "src/main/resources/application.properties";
+    /*private static Properties properties;
+    private static final String propertiesPath = "src/main/resources/application.properties";*/
 
 
+
+    /*
     private static void loadProperties(){
         properties = new Properties();
 
@@ -22,20 +24,28 @@ public class ConnectionUtility {
             e.printStackTrace();
         }
     }
+    */
 
     public static Connection getConnection(){
 
+        /*
         if(properties == null){
             loadProperties();
         }
+        */
 
         try{
             Class.forName("org.postgresql.Driver");
 
             Connection connection = DriverManager.getConnection(
+                   "jdbc:postgresql://enterprise.coeiy1xnn9ft.us-east-2.rds.amazonaws.com:5432/postgres?currentSchema=\"doge_orm\"",
+                   "postgres",
+                   "OVERLy;S1M"
+                   /*
                     properties.getProperty("url"),
                     properties.getProperty("username"),
                     properties.getProperty("password")
+                    */
             );
 
             return connection;

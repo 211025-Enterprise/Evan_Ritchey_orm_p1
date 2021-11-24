@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<testsuite tests="5" failures="0" name="TestLworm" time="4.62" errors="0" skipped="0">
+<testsuite tests="5" failures="0" name="TestLworm" time="8.304" errors="0" skipped="1">
   <properties>
     <property name="idea.version" value="2021.1.1"/>
     <property name="java.runtime.name" value="Java(TM) SE Runtime Environment"/>
@@ -44,7 +44,7 @@
     <property name="java.class.path" value="C:\Program Files\JetBrains\IntelliJ IDEA Community Edition 2021.1.1\plugins\maven\lib\maven3\boot\plexus-classworlds-2.6.0.jar;C:\Program Files\JetBrains\IntelliJ IDEA Community Edition 2021.1.1\plugins\maven\lib\maven3\boot\plexus-classworlds.license"/>
     <property name="java.vm.specification.version" value="14"/>
     <property name="sun.arch.data.model" value="64"/>
-    <property name="sun.java.command" value="org.codehaus.classworlds.Launcher -Didea.version=2021.1.1 test"/>
+    <property name="sun.java.command" value="org.codehaus.classworlds.Launcher -Didea.version=2021.1.1 install"/>
     <property name="java.home" value="C:\Program Files\Java\jdk-14.0.2"/>
     <property name="user.language" value="en"/>
     <property name="java.specification.vendor" value="Oracle Corporation"/>
@@ -59,9 +59,11 @@
     <property name="sun.cpu.endian" value="little"/>
     <property name="sun.cpu.isalist" value="amd64"/>
   </properties>
-  <testcase classname="TestLworm" name="testSessionMMMCreateGet" time="2.431"/>
-  <testcase classname="TestLworm" name="testDeleteFromDummyClassType2" time="0.349"/>
-  <testcase classname="TestLworm" name="testSessionMMMcreateOneValue" time="0.7"/>
-  <testcase classname="TestLworm" name="testSessionMMMcreateTable" time="0.759"/>
-  <testcase classname="TestLworm" name="testUpdateDummyClassType2" time="0.381"/>
+  <testcase classname="TestLworm" name="testSessionMMMCreateGet" time="4.585"/>
+  <testcase classname="TestLworm" name="testDeleteFromDummyClassType2" time="0.601"/>
+  <testcase classname="TestLworm" name="testSessionMMMcreateOneValue" time="1.226"/>
+  <testcase classname="TestLworm" name="testSessionMMMcreateTable" time="1.228">
+    <skipped/>
+  </testcase>
+  <testcase classname="TestLworm" name="testUpdateDummyClassType2" time="0.664"/>
 </testsuite>
