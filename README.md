@@ -40,11 +40,13 @@ where "obj" is the object corresponding to the class with the annotated fields
 
 #### FieldValuePair (fvp):
 
+> Lworm.FieldValuePair[] fvp = new Lworm.FieldValuePair[#]
+  
+Which contains items of:
+  
 > Lworm.FieldValuePair("fieldName",value) //where value corresponds to the type of "field"
 
-> Lworm.FieldValuePair[] fvp = new Lworm.FieldValuePair[#]
-
-Each item in this list is a constraint on the database query
+Each item of the list is a constraint on the database query
 
 ___
 
